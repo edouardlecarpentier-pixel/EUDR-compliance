@@ -1,12 +1,44 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EUDR Compliance</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>EUDR Compliance</h1>
-    <p>Welcome to the EUDR Compliance project.</p>
+    <header>
+        <h1>EUDR Compliance Check 🛰️</h1>
+        <p>Chargez un fichier GeoJSON pour comparer l'imagerie satellite avant et après le 31 décembre 2020.</p>
+    </header>
+
+    <main>
+        <div class="upload-section">
+            <label for="geojson-file">1. Choisissez votre fichier GeoJSON :</label>
+            <input type="file" id="geojson-file" accept=".geojson,.json">
+        </div>
+
+        <div id="map-container">
+            <h2>2. Visualisation de la parcelle</h2>
+            <div id="map"></div>
+        </div>
+
+        <div id="imagery-container">
+            <h2>3. Comparaison de l'imagerie</h2>
+            <div class="image-box">
+                <h3>Avant 2021 (ex: Juin-Dec 2020)</h3>
+                <div id="before-image" class="placeholder">Cliquez sur "Générer les images"</div>
+            </div>
+            <div class="image-box">
+                <h3>Maintenant (3 derniers mois)</h3>
+                <div id="now-image" class="placeholder">Après avoir chargé un GeoJSON</div>
+            </div>
+        </div>
+        <button id="fetch-images-btn" disabled>Générer les images</button>
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
