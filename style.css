@@ -1,13 +1,29 @@
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; background-color: #f4f6f9; color: #333; }
 header { background-color: #2c3e50; color: white; padding: 20px; text-align: center; }
 main { max-width: 1200px; margin: 20px auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-.upload-section, #imagery-container, #map-container { margin-bottom: 25px; }
+
+.input-container { display: flex; align-items: stretch; gap: 20px; margin-bottom: 25px; flex-wrap: wrap; }
+.input-option { border: 1px solid #ddd; border-radius: 8px; padding: 20px; flex: 1; min-width: 300px; }
+.input-option h2 { margin-top: 0; }
+.separator { display: flex; align-items: center; justify-content: center; font-weight: bold; color: #888; }
+
+.coord-inputs { display: flex; gap: 15px; margin-bottom: 15px; }
+.coord-inputs > div { flex: 1; }
+input[type="file"], input[type="number"] { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
+label { display: block; margin-bottom: 5px; font-weight: 500; }
+
+#map-container, #imagery-container { margin-bottom: 25px; }
 #map { height: 400px; border-radius: 8px; border: 1px solid #ccc; }
 #imagery-container { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
 .image-box { width: 100%; md:width: 48%; text-align: center; }
 .placeholder, .image-box img { width: 100%; height: 400px; border-radius: 8px; border: 1px solid #ddd; background-color: #e9ecef; display: flex; align-items: center; justify-content: center; color: #6c757d; }
 .image-box img { object-fit: cover; }
-button { display: block; width: 100%; padding: 15px; font-size: 1.2em; background-color: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.3s; }
+button { display: block; width: 100%; padding: 12px; font-size: 1em; background-color: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.3s; }
 button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
 button:hover:not(:disabled) { background-color: #2980b9; }
-@media (min-width: 768px) { .image-box { width: 48%; } }
+
+@media (max-width: 768px) {
+    .input-container { flex-direction: column; }
+    .separator { transform: rotate(90deg); margin: 0 auto; }
+    .image-box { width: 100%; }
+}
