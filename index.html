@@ -10,13 +10,33 @@
 <body>
     <header>
         <h1>EUDR Compliance Check 🛰️</h1>
-        <p>Chargez un fichier GeoJSON pour comparer l'imagerie satellite avant et après le 31 décembre 2020.</p>
+        <p>Chargez un fichier GeoJSON ou entrez des coordonnées pour comparer l'imagerie satellite.</p>
     </header>
 
     <main>
-        <div class="upload-section">
-            <label for="geojson-file">1. Choisissez votre fichier GeoJSON :</label>
-            <input type="file" id="geojson-file" accept=".geojson,.json">
+        <div class="input-container">
+            <div class="input-option">
+                <h2>1a. Charger un fichier GeoJSON</h2>
+                <label for="geojson-file">Sélectionnez votre fichier :</label>
+                <input type="file" id="geojson-file" accept=".geojson,.json">
+            </div>
+
+            <div class="separator">OU</div>
+
+            <div class="input-option">
+                <h2>1b. Entrer des coordonnées</h2>
+                <div class="coord-inputs">
+                    <div>
+                        <label for="latitude">Latitude (ex: 48.385)</label>
+                        <input type="number" id="latitude" placeholder="48.385">
+                    </div>
+                    <div>
+                        <label for="longitude">Longitude (ex: -4.465)</label>
+                        <input type="number" id="longitude" placeholder="-4.465">
+                    </div>
+                </div>
+                <button id="coord-btn">Générer depuis les coordonnées</button>
+            </div>
         </div>
 
         <div id="map-container">
@@ -28,14 +48,13 @@
             <h2>3. Comparaison de l'imagerie</h2>
             <div class="image-box">
                 <h3>Avant 2021 (ex: Juin-Dec 2020)</h3>
-                <div id="before-image" class="placeholder">Cliquez sur "Générer les images"</div>
+                <div id="before-image" class="placeholder">En attente de données...</div>
             </div>
             <div class="image-box">
                 <h3>Maintenant (3 derniers mois)</h3>
-                <div id="now-image" class="placeholder">Après avoir chargé un GeoJSON</div>
+                <div id="now-image" class="placeholder">En attente de données...</div>
             </div>
         </div>
-        <button id="fetch-images-btn" disabled>Générer les images</button>
     </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
