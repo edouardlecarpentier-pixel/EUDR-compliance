@@ -1,29 +1,176 @@
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; background-color: #f4f6f9; color: #333; }
-header { background-color: #2c3e50; color: white; padding: 20px; text-align: center; }
-main { max-width: 1200px; margin: 20px auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+// --- CONFIGURATION ---
+// VOS IDENTIFIANTS SENTINEL HUB
+const SENTINEL_CLIENT_ID = "edouard.lecarpentier@hamelinbrands.com"; 
+const SENTINEL_CLIENT_SECRET = "X2P&^wh@eJT0+o";
 
-.input-container { display: flex; align-items: stretch; gap: 20px; margin-bottom: 25px; flex-wrap: wrap; }
-.input-option { border: 1px solid #ddd; border-radius: 8px; padding: 20px; flex: 1; min-width: 300px; }
-.input-option h2 { margin-top: 0; }
-.separator { display: flex; align-items: center; justify-content: center; font-weight: bold; color: #888; }
+// --- ELEMENTS DU DOM ---
+const fileInput = document.getElementById('geojson-file');
+const coordBtn = document.getElementById('coord-btn');
+const latInput = document.getElementById('latitude');
+const lonInput = document.getElementById('longitude');
+const beforeImageDiv = document.getElementById('before-image');
+const nowImageDiv = document.getElementById('now-image');
 
-.coord-inputs { display: flex; gap: 15px; margin-bottom: 15px; }
-.coord-inputs > div { flex: 1; }
-input[type="file"], input[type="number"] { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
-label { display: block; margin-bottom: 5px; font-weight: 500; }
+// --- INITIALISATION DE LA CARTE ---
+const map = L.map('map').setView([46.2276, 2.2137], 5); // Vue centrée sur la France
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+}).addTo(map);
 
-#map-container, #imagery-container { margin-bottom: 25px; }
-#map { height: 400px; border-radius: 8px; border: 1px solid #ccc; }
-#imagery-container { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
-.image-box { width: 100%; md:width: 48%; text-align: center; }
-.placeholder, .image-box img { width: 100%; height: 400px; border-radius: 8px; border: 1px solid #ddd; background-color: #e9ecef; display: flex; align-items: center; justify-content: center; color: #6c757d; }
-.image-box img { object-fit: cover; }
-button { display: block; width: 100%; padding: 12px; font-size: 1em; background-color: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.3s; }
-button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
-button:hover:not(:disabled) { background-color: #2980b9; }
+let geojsonLayer;
 
-@media (max-width: 768px) {
-    .input-container { flex-direction: column; }
-    .separator { transform: rotate(90deg); margin: 0 auto; }
-    .image-box { width: 100%; }
+// --- GESTION DES DEUX METHODES D'ENTREE ---
+
+// Option 1: Chargement de fichier
+fileInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const data = JSON.parse(e.target.result);
+            const bounds = handleGeoData(data);
+            fetchAndDisplayImages(bounds);
+        } catch (error) {
+            alert("Erreur: Le fichier GeoJSON est invalide.");
+        }
+    };
+    reader.readAsText(file);
+});
+
+// Option 2: Saisie de coordonnées
+coordBtn.addEventListener('click', () => {
+    const lat = parseFloat(latInput.value);
+    const lon = parseFloat(lonInput.value);
+
+    if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+        alert("Veuillez entrer une latitude et une longitude valides.");
+        return;
+    }
+
+    // Créer une petite zone carrée (bounding box) autour du point
+    const buffer = 0.005; // Environ 500m
+    const bounds = L.latLngBounds([
+        [lat - buffer, lon - buffer],
+        [lat + buffer, lon + buffer]
+    ]);
+    
+    // Convertir cette zone en GeoJSON pour l'affichage
+    const geoJsonData = L.rectangle(bounds).toGeoJSON();
+    handleGeoData(geoJsonData);
+    fetchAndDisplayImages(bounds);
+});
+
+/**
+ * Affiche les données GeoJSON sur la carte et retourne les limites (bounds).
+ * @param {object} geoJsonData - Les données GeoJSON à afficher.
+ * @returns {L.LatLngBounds} Les limites de la géométrie.
+ */
+function handleGeoData(geoJsonData) {
+    if (geojsonLayer) map.removeLayer(geojsonLayer);
+    
+    geojsonLayer = L.geoJSON(geoJsonData).addTo(map);
+    const bounds = geojsonLayer.getBounds();
+    map.fitBounds(bounds);
+    return bounds;
+}
+
+/**
+ * Lance le processus de récupération et d'affichage des images.
+ * @param {L.LatLngBounds} bounds - La zone géographique pour laquelle chercher les images.
+ */
+async function fetchAndDisplayImages(bounds) {
+    if (!bounds) {
+        alert("Zone géographique non définie.");
+        return;
+    }
+
+    beforeImageDiv.innerHTML = 'Chargement...';
+    nowImageDiv.innerHTML = 'Chargement...';
+    coordBtn.disabled = true; // Désactiver les boutons pendant le chargement
+    fileInput.disabled = true;
+
+    try {
+        const accessToken = await getSentinelAuthToken();
+        const beforeImageUrl = await getSentinelImageUrl(bounds, '2020-06-01', '2020-12-30', accessToken);
+        const nowImageUrl = await getSentinelImageUrl(bounds, getThreeMonthsAgoDate(), new Date().toISOString().split('T')[0], accessToken);
+
+        beforeImageDiv.innerHTML = `<img src="${beforeImageUrl}" alt="Image avant 2021">`;
+        nowImageDiv.innerHTML = `<img src="${nowImageUrl}" alt="Image récente">`;
+
+    } catch (error) {
+        console.error("Erreur lors de la récupération des images:", error);
+        alert("Une erreur s'est produite. Vérifiez vos identifiants Sentinel Hub et la console pour plus de détails.");
+        beforeImageDiv.innerHTML = 'Erreur de chargement';
+        nowImageDiv.innerHTML = 'Erreur de chargement';
+    } finally {
+        coordBtn.disabled = false; // Réactiver les boutons
+        fileInput.disabled = false;
+    }
+}
+
+
+// --- FONCTIONS AUXILIAIRES POUR SENTINEL HUB ---
+async function getSentinelAuthToken() {
+    const response = await fetch('https://services.sentinel-hub.com/oauth/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+            'grant_type': 'client_credentials',
+            'client_id': SENTINEL_CLIENT_ID,
+            'client_secret': SENTINEL_CLIENT_SECRET
+        })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error_description || 'Authentication failed');
+    return data.access_token;
+}
+
+async function getSentinelImageUrl(bounds, fromDate, toDate, token) {
+    const bbox = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()];
+    const evalscript = `
+        //VERSION=3
+        function setup() {
+            return { input: ["B04", "B03", "B02"], output: { bands: 3 } };
+        }
+        function evaluatePixel(sample) {
+            return [2.5 * sample.B04, 2.5 * sample.B03, 2.5 * sample.B02];
+        }
+    `;
+
+    const requestBody = {
+        input: {
+            bounds: { bbox: bbox, properties: { crs: "http://www.opengis.net/def/crs/OGC/1.3/CRS84" } },
+            data: [{
+                type: "sentinel-2-l2a",
+                dataFilter: {
+                    timeRange: { from: `${fromDate}T00:00:00Z`, to: `${toDate}T23:59:59Z` },
+                    mosaickingOrder: "leastCC"
+                }
+            }]
+        },
+        output: { width: 512, height: 512, format: "image/jpeg" },
+        evalscript: evalscript
+    };
+
+    const response = await fetch('https://services.sentinel-hub.com/api/v1/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Sentinel Hub API Error: ${errorText}`);
+    }
+
+    const imageBlob = await response.blob();
+    return URL.createObjectURL(imageBlob);
+}
+
+function getThreeMonthsAgoDate() {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 3);
+    return d.toISOString().split('T')[0];
 }
