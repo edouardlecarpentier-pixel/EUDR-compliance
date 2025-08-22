@@ -1,7 +1,7 @@
 // --- CONFIGURATION ---
-// VOS IDENTIFIANTS SENTINEL HUB
+// VOS IDENTIFIANTS SENTINEL HUB SONT INTÉGRÉS CI-DESSOUS
 const SENTINEL_CLIENT_ID = "edouard.lecarpentier@hamelinbrands.com"; 
-const SENTINEL_CLIENT_SECRET = "X2P&^wh@eJT0+o";
+const SENTINEL_CLIENT_SECRET = "Thehelvetet43*";
 
 // --- ELEMENTS DU DOM ---
 const fileInput = document.getElementById('geojson-file');
@@ -56,7 +56,6 @@ coordBtn.addEventListener('click', () => {
     }
 
     console.log("Validation réussie. Création de la zone géographique.");
-    // Créer une petite zone carrée (bounding box) autour du point
     const buffer = 0.005; // Environ 500m
     const bounds = L.latLngBounds([
         [lat - buffer, lon - buffer],
@@ -137,6 +136,7 @@ async function getSentinelAuthToken() {
 }
 
 async function getSentinelImageUrl(bounds, fromDate, toDate, token) {
+    // BUG CORRIGÉ ICI : bounds.getNorth() au lieu de bounds.e()
     const bbox = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()];
     const evalscript = `
         //VERSION=3
