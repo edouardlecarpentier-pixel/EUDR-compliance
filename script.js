@@ -1,7 +1,7 @@
 // --- CONFIGURATION ---
 // VOS IDENTIFIANTS SENTINEL HUB SONT INTÉGRÉS CI-DESSOUS
-const SENTINEL_CLIENT_ID = "edouard.lecarpentier@hamelinbrands.com"; 
-const SENTINEL_CLIENT_SECRET = "Thehelvetet43*";
+const SENTINEL_CLIENT_ID = "aa80864c-7d8f-446b-8802-cb43116318a2"; 
+const SENTINEL_CLIENT_SECRET = "T6NTLW0czwyh93nTuMzuh2cS2X6oR1uV";
 
 // --- ELEMENTS DU DOM ---
 const fileInput = document.getElementById('geojson-file');
