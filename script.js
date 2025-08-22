@@ -15,7 +15,6 @@ const map = L.map('map').setView([46.2276, 2.2137], 5); // Vue centrée sur la F
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
-
 let geojsonLayer;
 
 // --- GESTION DES DEUX METHODES D'ENTREE ---
@@ -124,7 +123,6 @@ async function fetchAndDisplayImages(bounds) {
 }
 
 // --- NOUVELLES FONCTIONS POUR L'IMAGERIE OUVERTE ---
-
 /**
  * Génère une URL d'image satellite via des services ouverts
  * Utilise Google Earth Engine ou des services similaires
@@ -186,7 +184,6 @@ function generateFallbackImageUrl(bounds, period) {
 }
 
 // --- FONCTIONS UTILITAIRES POUR LES TUILES ---
-
 /**
  * Convertit longitude en numéro de tuile X
  */
@@ -209,6 +206,61 @@ function getThreeMonthsAgoDate() {
     const d = new Date();
     d.setMonth(d.getMonth() - 3);
     return d.toISOString().split('T')[0];
+}
+
+/**
+ * Génère des liens Copernicus pour une zone géographique et une période donnée
+ * @param {number} lat - Latitude
+ * @param {number} lon - Longitude  
+ * @param {string} dateFrom - Date de début (format YYYY-MM-DD)
+ * @param {string} dateTo - Date de fin (format YYYY-MM-DD)
+ * @returns {Object} Objet contenant les URLs Copernicus SciHub et EO Browser
+ */
+function generateCopernicusLinks(lat, lon, dateFrom, dateTo) {
+    // Création d'une bbox autour du point (buffer d'environ 1km)
+    const buffer = 0.009; // ~1km à l'équateur
+    const bbox = {
+        west: lon - buffer,
+        south: lat - buffer,
+        east: lon + buffer,
+        north: lat + buffer
+    };
+    
+    // URL pour Copernicus Open Access Hub (SciHub)
+    const scihubUrl = `https://scihub.copernicus.eu/dhus/#/home?` +
+        `bbox=${bbox.west.toFixed(6)}%2C${bbox.south.toFixed(6)}%2C${bbox.east.toFixed(6)}%2C${bbox.north.toFixed(6)}` +
+        `&beginDate=${dateFrom}&endDate=${dateTo}&mission=Sentinel-2`;
+    
+    // URL pour EO Browser
+    const eoBrowserUrl = `https://apps.sentinel-hub.com/eo-browser/?` +
+        `zoom=14&lat=${lat.toFixed(6)}&lng=${lon.toFixed(6)}` +
+        `&themeId=DEFAULT-THEME&visualizationUrl=` +
+        `&datasetId=S2L2A&fromTime=${dateFrom}T00%3A00%3A00.000Z&toTime=${dateTo}T23%3A59%3A59.999Z` +
+        `&layerId=1_TRUE_COLOR`;
+    
+    return {
+        scihub: scihubUrl,
+        eoBrowser: eoBrowserUrl
+    };
+}
+
+/**
+ * Ouvre les liens Copernicus dans de nouveaux onglets
+ * @param {number} lat - Latitude
+ * @param {number} lon - Longitude
+ * @param {string} dateFrom - Date de début
+ * @param {string} dateTo - Date de fin
+ */
+function openCopernicusLinks(lat, lon, dateFrom, dateTo) {
+    const links = generateCopernicusLinks(lat, lon, dateFrom, dateTo);
+    
+    // Ouvrir SciHub
+    window.open(links.scihub, '_blank');
+    
+    // Ouvrir EO Browser avec un délai pour éviter le blocage de popup
+    setTimeout(() => {
+        window.open(links.eoBrowser, '_blank');
+    }, 500);
 }
 
 // --- FONCTIONS OBSOLETES SUPPRIMEES ---
