@@ -4,38 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EUDR Compliance</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
     <header>
         <h1>EUDR Compliance Check 🛰️</h1>
         <p>Chargez un fichier GeoJSON ou entrez des coordonnées pour comparer l'imagerie satellite.</p>
     </header>
-
     <main>
         <div class="input-container">
             <div class="input-option">
                 <h2>1a. Charger un fichier GeoJSON</h2>
                 <label for="geojson-file">Sélectionnez votre fichier :</label>
-                <input type="file" id="geojson-file" accept=".geojson,.json">
+                <input type="file" id="geojson-file" accept=".geojson,.json" />
             </div>
-
             <div class="separator">OU</div>
-
             <div class="input-option">
                 <h2>1b. Entrer des coordonnées</h2>
                 <div class="coord-inputs">
                     <div>
                         <label for="latitude">Latitude (ex: 48.385)</label>
-                        <input type="number" id="latitude" placeholder="48.385">
+                        <input type="number" id="latitude" placeholder="48.385" step="any" />
                     </div>
                     <div>
                         <label for="longitude">Longitude (ex: -4.465)</label>
-                        <input type="number" id="longitude" placeholder="-4.465">
+                        <input type="number" id="longitude" placeholder="-4.465" step="any" />
                     </div>
                 </div>
                 <button id="coord-btn">Générer depuis les coordonnées</button>
+            </div>
+        </div>
+        
+        <div id="copernicus-container" class="input-container">
+            <div class="input-option">
+                <h2>1c. Accès aux données Copernicus</h2>
+                <p>Entrez une période pour ouvrir les portails Copernicus SciHub et EO Browser :</p>
+                <div class="coord-inputs">
+                    <div>
+                        <label for="date-from">Date de début</label>
+                        <input type="date" id="date-from" value="2024-01-01" />
+                    </div>
+                    <div>
+                        <label for="date-to">Date de fin</label>
+                        <input type="date" id="date-to" value="2024-12-31" />
+                    </div>
+                </div>
+                <button id="copernicus-btn">🛰️ Ouvrir Copernicus SciHub & EO Browser</button>
             </div>
         </div>
 
@@ -43,7 +58,6 @@
             <h2>2. Visualisation de la parcelle</h2>
             <div id="map"></div>
         </div>
-
         <div id="imagery-container">
             <h2>3. Comparaison de l'imagerie</h2>
             <div class="image-box">
@@ -56,7 +70,6 @@
             </div>
         </div>
     </main>
-
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="script.js"></script>
 </body>
