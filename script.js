@@ -1,8 +1,7 @@
 // --- CONFIGURATION ---
 // VOS IDENTIFIANTS SENTINEL HUB SONT INTÉGRÉS CI-DESSOUS
-const SENTINEL_CLIENT_ID = "aa80864c-7d8f-446b-8802-cb43116318a2"; 
-const SENTINEL_CLIENT_SECRET = "T6NTLW0czwyh93nTuMzuh2cS2X6oR1uV";
-
+const SENTINEL_CLIENT_ID = "9360aa8b-f80f-41f3-b4ef-515138519a7b"; 
+const SENTINEL_CLIENT_SECRET = "8V8tczFD2V5YLMUPp9RjSpVafn5aHYXD";
 // --- ELEMENTS DU DOM ---
 const fileInput = document.getElementById('geojson-file');
 const coordBtn = document.getElementById('coord-btn');
@@ -10,23 +9,18 @@ const latInput = document.getElementById('latitude');
 const lonInput = document.getElementById('longitude');
 const beforeImageDiv = document.getElementById('before-image');
 const nowImageDiv = document.getElementById('now-image');
-
 // --- INITIALISATION DE LA CARTE ---
 const map = L.map('map').setView([46.2276, 2.2137], 5); // Vue centrée sur la France
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
-
 let geojsonLayer;
-
 // --- GESTION DES DEUX METHODES D'ENTREE ---
-
 // Option 1: Chargement de fichier
 fileInput.addEventListener('change', (event) => {
     console.log("Fichier sélectionné.");
     const file = event.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (e) => {
         try {
@@ -40,21 +34,17 @@ fileInput.addEventListener('change', (event) => {
     };
     reader.readAsText(file);
 });
-
 // Option 2: Saisie de coordonnées
 coordBtn.addEventListener('click', () => {
     console.log("Bouton 'Générer depuis les coordonnées' cliqué.");
-
     const lat = parseFloat(latInput.value);
     const lon = parseFloat(lonInput.value);
     console.log(`Latitude lue: ${lat}, Longitude lue: ${lon}`);
-
     if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
         console.error("Validation des coordonnées échouée.");
         alert("Veuillez entrer une latitude et une longitude valides.");
         return;
     }
-
     console.log("Validation réussie. Création de la zone géographique.");
     const buffer = 0.005; // Environ 500m
     const bounds = L.latLngBounds([
@@ -68,7 +58,6 @@ coordBtn.addEventListener('click', () => {
     console.log("Appel de fetchAndDisplayImages.");
     fetchAndDisplayImages(bounds);
 });
-
 function handleGeoData(geoJsonData) {
     console.log("Affichage de la géométrie sur la carte.");
     if (geojsonLayer) map.removeLayer(geojsonLayer);
@@ -78,19 +67,16 @@ function handleGeoData(geoJsonData) {
     map.fitBounds(bounds);
     return bounds;
 }
-
 async function fetchAndDisplayImages(bounds) {
     if (!bounds) {
         alert("Zone géographique non définie.");
         return;
     }
     console.log("Début de la récupération des images pour la zone:", bounds);
-
     beforeImageDiv.innerHTML = 'Chargement...';
     nowImageDiv.innerHTML = 'Chargement...';
     coordBtn.disabled = true;
     fileInput.disabled = true;
-
     try {
         console.log("Obtention du token d'authentification...");
         const accessToken = await getSentinelAuthToken();
@@ -101,11 +87,9 @@ async function fetchAndDisplayImages(bounds) {
         
         console.log("Récupération de l'image 'maintenant'...");
         const nowImageUrl = await getSentinelImageUrl(bounds, getThreeMonthsAgoDate(), new Date().toISOString().split('T')[0], accessToken);
-
-        beforeImageDiv.innerHTML = `<img src="${beforeImageUrl}" alt="Image avant 2021">`;
-        nowImageDiv.innerHTML = `<img src="${nowImageUrl}" alt="Image récente">`;
+        beforeImageDiv.innerHTML = `<img src="${beforeImageUrl}" alt="Image avant 2021"/>`;
+        nowImageDiv.innerHTML = `<img src="${nowImageUrl}" alt="Image récente"/>`;
         console.log("Images affichées avec succès !");
-
     } catch (error) {
         console.error("ERREUR MAJEURE lors de la récupération des images:", error);
         alert("Une erreur s'est produite. Vérifiez la console (F12) pour plus de détails.");
@@ -117,8 +101,6 @@ async function fetchAndDisplayImages(bounds) {
         console.log("Processus terminé, boutons réactivés.");
     }
 }
-
-
 // --- FONCTIONS AUXILIAIRES POUR SENTINEL HUB ---
 async function getSentinelAuthToken() {
     const response = await fetch('https://services.sentinel-hub.com/oauth/token', {
@@ -134,7 +116,6 @@ async function getSentinelAuthToken() {
     if (!response.ok) throw new Error(data.error_description || 'Authentication failed');
     return data.access_token;
 }
-
 async function getSentinelImageUrl(bounds, fromDate, toDate, token) {
     // BUG CORRIGÉ ICI : bounds.getNorth() au lieu de bounds.e()
     const bbox = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()];
@@ -147,7 +128,6 @@ async function getSentinelImageUrl(bounds, fromDate, toDate, token) {
             return [2.5 * sample.B04, 2.5 * sample.B03, 2.5 * sample.B02];
         }
     `;
-
     const requestBody = {
         input: {
             bounds: { bbox: bbox, properties: { crs: "http://www.opengis.net/def/crs/OGC/1.3/CRS84" } },
@@ -162,22 +142,18 @@ async function getSentinelImageUrl(bounds, fromDate, toDate, token) {
         output: { width: 512, height: 512, format: "image/jpeg" },
         evalscript: evalscript
     };
-
     const response = await fetch('https://services.sentinel-hub.com/api/v1/process', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(requestBody)
     });
-
     if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Sentinel Hub API Error: ${errorText}`);
     }
-
     const imageBlob = await response.blob();
     return URL.createObjectURL(imageBlob);
 }
-
 function getThreeMonthsAgoDate() {
     const d = new Date();
     d.setMonth(d.getMonth() - 3);
