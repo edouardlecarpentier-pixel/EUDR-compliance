@@ -15,6 +15,7 @@ const map = L.map('map').setView([46.2276, 2.2137], 5); // Vue centrée sur la F
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
+
 let geojsonLayer;
 
 // --- GESTION DES DEUX METHODES D'ENTREE ---
@@ -73,6 +74,12 @@ function handleGeoData(geoJsonData) {
     geojsonLayer = L.geoJSON(geoJsonData).addTo(map);
     const bounds = geojsonLayer.getBounds();
     map.fitBounds(bounds);
+    
+    // Appel automatique de showCopernicusButtons après affichage du polygone
+    const dateFrom = '2020-01-01';
+    const dateTo = '2024-12-31';
+    showCopernicusButtons(bounds, dateFrom, dateTo);
+    
     return bounds;
 }
 
@@ -104,6 +111,11 @@ async function fetchAndDisplayImages(bounds) {
         
         console.log("Images affichées avec succès !");
         
+        // Appel automatique de showCopernicusButtons après affichage des images
+        const dateFrom = '2020-01-01';
+        const dateTo = '2024-12-31';
+        showCopernicusButtons(bounds, dateFrom, dateTo);
+        
     } catch (error) {
         console.error("ERREUR lors de la récupération des images:", error);
         alert("Une erreur s'est produite lors du chargement des images. Vérifiez la console (F12) pour plus de détails.");
@@ -114,6 +126,11 @@ async function fetchAndDisplayImages(bounds) {
         
         beforeImageDiv.innerHTML = `<img src="${fallbackBeforeUrl}" alt="Image satellite avant (approximative)" style="width: 100%; height: auto;"/>`;
         nowImageDiv.innerHTML = `<img src="${fallbackNowUrl}" alt="Image satellite récente (approximative)" style="width: 100%; height: auto;"/>`;
+        
+        // Appel automatique de showCopernicusButtons même en cas d'erreur
+        const dateFrom = '2020-01-01';
+        const dateTo = '2024-12-31';
+        showCopernicusButtons(bounds, dateFrom, dateTo);
         
     } finally {
         coordBtn.disabled = false;
@@ -217,31 +234,11 @@ function getThreeMonthsAgoDate() {
  * @returns {Object} Objet contenant les URLs Copernicus SciHub et EO Browser
  */
 function generateCopernicusLinks(lat, lon, dateFrom, dateTo) {
-    // Création d'une bbox autour du point (buffer d'environ 1km)
-    const buffer = 0.009; // ~1km à l'équateur
-    const bbox = {
-        west: lon - buffer,
-        south: lat - buffer,
-        east: lon + buffer,
-        north: lat + buffer
-    };
-    
-    // URL pour Copernicus Open Access Hub (SciHub)
-    const scihubUrl = `https://scihub.copernicus.eu/dhus/#/home?` +
-        `bbox=${bbox.west.toFixed(6)}%2C${bbox.south.toFixed(6)}%2C${bbox.east.toFixed(6)}%2C${bbox.north.toFixed(6)}` +
-        `&beginDate=${dateFrom}&endDate=${dateTo}&mission=Sentinel-2`;
-    
-    // URL pour EO Browser
-    const eoBrowserUrl = `https://apps.sentinel-hub.com/eo-browser/?` +
-        `zoom=14&lat=${lat.toFixed(6)}&lng=${lon.toFixed(6)}` +
-        `&themeId=DEFAULT-THEME&visualizationUrl=` +
-        `&datasetId=S2L2A&fromTime=${dateFrom}T00%3A00%3A00.000Z&toTime=${dateTo}T23%3A59%3A59.999Z` +
-        `&layerId=1_TRUE_COLOR`;
-    
-    return {
-        scihub: scihubUrl,
-        eoBrowser: eoBrowserUrl
-    };
+    // Lien vers Copernicus Scihub
+    const scihub = `https://scihub.copernicus.eu/dhus/#/home?start=${dateFrom}T00:00:00Z&end=${dateTo}T23:59:59Z&lat=${lat}&lng=${lon}&zoom=13`;
+    // Lien vers EO Browser
+    const eobrowser = `https://apps.sentinel-hub.com/eo-browser/?lat=${lat}&lng=${lon}&zoom=13&fromTime=${dateFrom}&toTime=${dateTo}&datasetId=S2L2A`;
+    return { scihub, eobrowser };
 }
 
 /**
@@ -259,33 +256,23 @@ function openCopernicusLinks(lat, lon, dateFrom, dateTo) {
     
     // Ouvrir EO Browser avec un délai pour éviter le blocage de popup
     setTimeout(() => {
-        window.open(links.eoBrowser, '_blank');
+        window.open(links.eobrowser, '_blank');
     }, 500);
+}
+
+// Exemple d'utilisation (intègre ceci dans ta logique d'affichage)
+function showCopernicusButtons(bounds, dateFrom, dateTo) {
+    const centerLat = (bounds.getNorth() + bounds.getSouth()) / 2;
+    const centerLon = (bounds.getEast() + bounds.getWest()) / 2;
+    const links = generateCopernicusLinks(centerLat, centerLon, dateFrom, dateTo);
+    document.getElementById('copernicus-links').innerHTML = `
+        <h3>🛰️ Liens Copernicus pour cette zone</h3>
+        <p><a href="${links.scihub}" target="_blank" style="color: #007cba; text-decoration: underline;">📡 Copernicus SciHub - Recherche d'images Sentinel</a></p>
+        <p><a href="${links.eobrowser}" target="_blank" style="color: #007cba; text-decoration: underline;">🌍 EO Browser - Visualisation interactive</a></p>
+    `;
 }
 
 // --- FONCTIONS OBSOLETES SUPPRIMEES ---
 // Les fonctions getSentinelAuthToken() et getSentinelImageUrl() ont été supprimées
 // car elles utilisaient l'API Sentinel Hub avec authentification
-
 console.log("Script initialisé avec les services d'imagerie ouverte.");
-
-function generateCopernicusLinks(lat, lon, dateFrom, dateTo) {
-    // Lien vers Copernicus Scihub
-    const scihub = `https://scihub.copernicus.eu/dhus/#/home?start=${dateFrom}T00:00:00Z&end=${dateTo}T23:59:59Z&lat=${lat}&lng=${lon}&zoom=13`;
-    // Lien vers EO Browser
-    const eobrowser = `https://apps.sentinel-hub.com/eo-browser/?lat=${lat}&lng=${lon}&zoom=13&fromTime=${dateFrom}&toTime=${dateTo}&datasetId=S2L2A`;
-    return { scihub, eobrowser };
-}
-
-// Exemple d’utilisation (intègre ceci dans ta logique d’affichage)
-function showCopernicusButtons(bounds, dateFrom, dateTo) {
-    const centerLat = (bounds.getNorth() + bounds.getSouth()) / 2;
-    const centerLon = (bounds.getEast() + bounds.getWest()) / 2;
-    const links = generateCopernicusLinks(centerLat, centerLon, dateFrom, dateTo);
-
-    document.getElementById('copernicus-links').innerHTML = `
-        <a href="${links.scihub}" target="_blank">Copernicus Scihub (zone/date)</a><br>
-        <a href="${links.eobrowser}" target="_blank">EO Browser (zone/date)</a>
-    `;
-}
-
