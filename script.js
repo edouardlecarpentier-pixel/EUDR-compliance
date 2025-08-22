@@ -268,3 +268,24 @@ function openCopernicusLinks(lat, lon, dateFrom, dateTo) {
 // car elles utilisaient l'API Sentinel Hub avec authentification
 
 console.log("Script initialisé avec les services d'imagerie ouverte.");
+
+function generateCopernicusLinks(lat, lon, dateFrom, dateTo) {
+    // Lien vers Copernicus Scihub
+    const scihub = `https://scihub.copernicus.eu/dhus/#/home?start=${dateFrom}T00:00:00Z&end=${dateTo}T23:59:59Z&lat=${lat}&lng=${lon}&zoom=13`;
+    // Lien vers EO Browser
+    const eobrowser = `https://apps.sentinel-hub.com/eo-browser/?lat=${lat}&lng=${lon}&zoom=13&fromTime=${dateFrom}&toTime=${dateTo}&datasetId=S2L2A`;
+    return { scihub, eobrowser };
+}
+
+// Exemple d’utilisation (intègre ceci dans ta logique d’affichage)
+function showCopernicusButtons(bounds, dateFrom, dateTo) {
+    const centerLat = (bounds.getNorth() + bounds.getSouth()) / 2;
+    const centerLon = (bounds.getEast() + bounds.getWest()) / 2;
+    const links = generateCopernicusLinks(centerLat, centerLon, dateFrom, dateTo);
+
+    document.getElementById('copernicus-links').innerHTML = `
+        <a href="${links.scihub}" target="_blank">Copernicus Scihub (zone/date)</a><br>
+        <a href="${links.eobrowser}" target="_blank">EO Browser (zone/date)</a>
+    `;
+}
+
